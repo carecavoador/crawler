@@ -1,6 +1,10 @@
-from osnumber import OSNumber, guess_os_number
+import os
+from shutil import copy
 from pathlib import Path
 from PyPDF2 import PdfFileReader
+
+from osnumber import OSNumber, guess_os_number
+from flags import Flag
 
 class Job:
     def __init__(self, os_file: Path, os_number: OSNumber) -> None:
@@ -11,8 +15,8 @@ class Job:
         self.needs_paper_proof = False
         self.look_for_items_to_send()
 
-        self.layout_file: Path = None
-        self.paper_proof_file: Path = None
+        self.files = []
+
     
     def __repr__(self) -> str:
         return f"{self.os_number}, layout={self.needs_layout}, proof={self.needs_paper_proof})"
@@ -65,15 +69,27 @@ class Job:
             elif item.startswith(PAPER_PROOF):
                 self.needs_paper_proof = True
     
-    def look_for_materials(self, look_up_files: list([Path])) -> list([tuple([OSNumber, Path])]):
+    def look_for_materials(self, look_up_files: list([Path])) -> list([Path]):
         """
         Iterates over a list of Pathes and looks for matching OSNumber. Returns
-        a tuple containing the respective OS Number and the full path to the
-        found file.
+        the full path to the found file.
         """
         materials = []
         for file in look_up_files:
             found_os = guess_os_number(file.name)
             if found_os and found_os.number == self.os_number.number:
-                materials.append(tuple([found_os, file]))
+                materials.append(file)
         return materials
+        
+    
+    def gather_job_files(self, source: list, destination: Path) -> None:
+        if not os.path.exists(destination):
+            os.mkdir(destination)
+        else:
+            print("Diretório já existe!")
+        
+        for file in source:
+            copy(file, destination)
+            self.files.append(destination.joinpath(file.name))
+        
+        print(self.files)
