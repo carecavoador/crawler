@@ -1,5 +1,4 @@
 import os
-import re
 from pathlib import Path
 from datetime import date
 
@@ -24,28 +23,36 @@ def look_for_jobs(where: list([Path])) -> list([Job]):
     Lists all the files (candidates) in the given path (where) and looks for
     the os number and os version in the candidates list.
     """
-    candidates = [Path(_f) for _f in os.listdir(where)]
+    # candidates = [Path(_f) for _f in os.listdir(where)]
     
     jobs = []
 
-    for candidate in candidates:
+    for candidate in where:
         os_number = guess_os_number(candidate.name)
         if os_number:
-            jobs.append(Job(Path(where, candidate), os_number))
+            jobs.append(Job(candidate, os_number))
     
     return jobs
 
+
 def main():
-    jobs_pra_fazer = look_for_jobs(ROOT_DIR)
+    scan_dir = [Path(ROOT_DIR, f) for f in os.listdir(ROOT_DIR)]
+    jobs_pra_fazer = look_for_jobs(scan_dir)
+
     layouts_list = [Path(ROOT_DIR, i) for i in os.listdir(LAYOUTS_DIR)]
     proofs_list = [Path(ROOT_DIR, i) for i in os.listdir(PROOFS_DIR)]
 
     for item in jobs_pra_fazer:
         print(item)
-        layouts = item.look_for_materials(layouts_list)
-        print("\tlayouts:", layouts)
-        proofs = item.look_for_materials(proofs_list)
-        print("\tproofs:", proofs)
+        if item.needs_layout:
+            layouts = item.look_for_materials(layouts_list)
+            print("\tlayout:", layouts)
+        if item.needs_paper_proof:
+            proofs = item.look_for_materials(proofs_list)
+            print("\tproof:", proofs)
+    
+    pausa = input("Pressione uma tecla para encerrar.")
+        
 
 if __name__ == "__main__":
     main()
