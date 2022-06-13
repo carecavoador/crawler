@@ -1,5 +1,5 @@
 import os
-from shutil import copy
+from shutil import copy, move
 from pathlib import Path
 from PyPDF2 import PdfFileReader
 
@@ -91,5 +91,6 @@ class Job:
         for file in source:
             copy(file, destination)
             self.files.append(destination.joinpath(file.name))
+            move(file, Path(file.parent, "Baixados"))
         
         print(self.files)
