@@ -1,23 +1,23 @@
-from dataclasses import dataclass, field
 from pathlib import Path
 
-from PyPDF2 import PdfFileReader
+from osnumber import OsNumber
 
-from flags import Flag
 
-@dataclass
 class Job:
-    os: int
-    version: int
-    layout: list([Path])
-    proof: list([Path])
-    needs_layout: bool = False
-    needs_proof: bool = False
-
-
-def look_for_items_to_send(os_file: Path) -> list([Flag]):
+    def __init__(self, _os_num: OsNumber):
+        self.os = _os_num
+        self.needs_layout = False
+        self.needs_proof = False
+        self.layout = Path
+        self.proof = Path
     
-    with open(os_file, "rb") as file:
+    def __repr__(self):
+        return f"Job: OS {self.os.number} V{self.os.version}, layout: {self.needs_layout}, proof: {self.needs_proof}"
+
+
+def look_for_items_to_send(job: Job):
+    
+    with open(self.os_file, "rb") as file:
         
         pdf_reader = PdfFileReader(file)
         
@@ -50,24 +50,27 @@ def look_for_items_to_send(os_file: Path) -> list([Flag]):
     # Remove the comments and creat a set with unique entries.
     items = set([item for item in items if not item.startswith(COMMENT)])
 
-    result = []
+
     """
     Falta terminar de implementar essa parte final com o restante dos
     materiais possíveis para um Job.
     """
     for item in items:
-        if item.startswith(LAYOUT):
-            result.append(Flag.LAYOUT)
+        if item.startswith(PLATES):
+            self.needs_plates = True
+        elif item.startswith(LAYOUT):
+            self.needs_layout = True
         elif item.startswith(PAPER_PROOF):
-            result.append(Flag.PROOF)
-    
-    return result
+            self.needs_paper_proof = True
+
+
 
 
 def main():
-    arquivo = Path(r"E:\python\crawler\Arquivos\OS_561196_2_V2.pdf")
-    itens = look_for_items_to_send(arquivo)
-    print(itens[0].LAYOUT)
+    os = OsNumber(123456, 2)
+    job = Job(os)
+    print(job)
+
 
 if __name__ == "__main__":
     main()

@@ -2,38 +2,26 @@ from dataclasses import dataclass
 import re
 
 @dataclass
-class OSNumber:
+class OsNumber:
     number: int
     version: int
-    order: int = 0
-
-    def __repr__(self):
-        if self.order:
-            return f"OS {self.number} P{self.order} V{self.version}"
-        else:
-            return f"OS {self.number} V{self.version}"
-
 
 """
-Regular expression pattern to match 4 or more digits (OS number) followed by a
-version number as in '123456_v13' or 4 or more digits (OS number) followed by
-a order number and a version numberin '123456_3_v9'.
+Regular expression pattern to match 4 or more digits (OS Number) followed by
+any character or space and version number as in '123456_v13'.
 """
-RE_OS = "([0-9]{4,}.[vV][0-9]+)|([0-9]{4,}.[0-9]+.[vV][0-9]+)|([0-9]{4,}.p[0-9]+.[vV][0-9]+)"
+# RE_OS = "(\d{4,}).[vV](\d+)|(\d{4,})_\d+_[vV](\d+)"
+RE_OS = "(\d{4,}).*[vV](\d+)"
 
-def guess_os_number(filename: str) -> OSNumber:
+def guess_os_number(filename: str) -> OsNumber:
     """
-    Tries to guess the os number, record and version from a given filename and
-    returns a OSNumber object.
+    Tries to guess the OS Number and version from a given filename and returns
+    an 'OsNumber' object. Returns 'None' if no Os Number is found.
     """
-    os_number = re.search(RE_OS, filename)
-    if os_number:
-        match = os_number.group().split("_")
-        if len(match) == 3:
-            return OSNumber(int(match[0]), int(match[1]), int(match[2][1:]))
-        elif len(match) == 2:
-            return OSNumber(int(match[0]), int(match[1][1:]))
-        else:
-            return None
+    _os_number = re.search(RE_OS, filename)
+    if _os_number:
+        n = _os_number.group(1)
+        v = _os_number.group(2)
+        return OsNumber(n, v)
     else:
         return None

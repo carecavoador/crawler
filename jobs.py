@@ -3,11 +3,11 @@ from shutil import copy, move
 from pathlib import Path
 from PyPDF2 import PdfFileReader
 
-from osnumber import OSNumber, guess_os_number
+from osnumber import OsNumber, guess_os_number
 from flags import Flag
 
 class Job:
-    def __init__(self, os_file: Path, os_number: OSNumber) -> None:
+    def __init__(self, os_file: Path, os_number: OsNumber) -> None:
         self.os_number = os_number
         self.os_file = os_file
 
@@ -71,7 +71,7 @@ class Job:
     
     def look_for_materials(self, look_up_files: list([Path])) -> list([Path]):
         """
-        Iterates over a list of Pathes and looks for matching OSNumber. Returns
+        Iterates over a list of Pathes and looks for matching OsNumber. Returns
         the full path to the found file.
         """
         materials = []
