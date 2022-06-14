@@ -9,6 +9,7 @@ class Job:
     needs_layout: bool = False
     needs_proof: bool = False
     profile: str = ""
+    pdf: Path = None
 
     def __repr__(self):
         return f"OS_{self.os.number}_V{self.os.version}"

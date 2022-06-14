@@ -2,7 +2,7 @@ import os
 import re
 from pathlib import Path
 from shutil import move, copy
-from datetime import date
+from datetime import date, datetime
 
 from PyPDF2 import PdfFileReader
 
@@ -11,9 +11,11 @@ from jobs import Job
 
 TODAY = date.today().strftime("%d-%m-%Y")
 ENTRADA = Path(r"E:\Desktop\Entrada")
+# LAYOUTS = Path(r"E:\Desktop\Origem")
+# DIGITAIS = LAYOUTS
 LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
 DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
-SAIDA = Path(r"E:\Desktop\Saida")
+SAIDA = Path(r"X:\Transporte\Leticia")
 
 
 def os_match(job: Job, os: OsNumber) -> bool():
@@ -68,8 +70,8 @@ def get_data_for_job(pdf: Path) -> tuple():
             layout = True
         elif line.startswith("Prova Digital"):
             proof = True
-    
-    return (profile, layout, proof)
+
+    return (profile, layout, proof, pdf)
 
 
 def scan_folder_for_jobs(folder: Path) -> list([Job]):
@@ -84,19 +86,17 @@ def scan_folder_for_jobs(folder: Path) -> list([Job]):
         os_num = guess_os_number(candidate.name)
         if os_num:
             new_job = Job(os_num)
-
             job_data = get_data_for_job(candidate)
-            
             new_job.profile = job_data[0]
             new_job.needs_layout = job_data[1]
             new_job.needs_proof = job_data[2]
-            
+            new_job.pdf = job_data[3]
             jobs.append(new_job)
     
     return jobs
 
 
-def gather_files_for_job(job: Job, origin: Path(), output: Path(), description: str ="") -> int():
+def gather_files_for_job(job: Job, origin: Path, output: Path, description: str ="") -> int():
     found_files = find_job_files(job, origin)
     files_done = 0
     if found_files:
@@ -106,17 +106,20 @@ def gather_files_for_job(job: Job, origin: Path(), output: Path(), description: 
             done_dir = origin.joinpath("Baixados")
             if not done_dir.exists():
                 os.mkdir(done_dir)
-            move(file, done_dir)
+            try:
+                move(file, done_dir)
+            except Exception as e:
+                print(e)
     return files_done
 
 
-def work(jobs: list([Job]), layouts_dir: Path(), proofs_dir: Path(), destination: Path()) -> None:
+def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Path) -> None:
     for job in jobs:
         print(f"Processando {job}...")
 
         # Job needs layout.
         if job.needs_layout:
-            output_layouts = destination.joinpath("Layouts")
+            output_layouts = destination.joinpath("Prints Layout")
 
             # Checks if output dir exists. If not, create it.
             if not output_layouts.exists():
@@ -129,9 +132,7 @@ def work(jobs: list([Job]), layouts_dir: Path(), proofs_dir: Path(), destination
                 description="_Print_Layout"
             )
             if layouts_done:
-                print(f"{layouts_done} layouts processados.")
-            else:
-                print(f"Não foi possível localizar layouts para {job}.")
+                job.needs_layout = False
 
         # Job needs proof.
         if job.needs_proof:
@@ -141,24 +142,32 @@ def work(jobs: list([Job]), layouts_dir: Path(), proofs_dir: Path(), destination
             if not output_proofs.exists():
                 os.mkdir(output_proofs)
             
-            layouts_done = gather_files_for_job(
+            proofs_done = gather_files_for_job(
                 job=job,
                 origin=proofs_dir,
                 output=output_proofs,
                 description=job.profile
             )
-            if layouts_done:
-                print(f"{layouts_done} provas digitais processadas.")
-            else:
-                print(f"Não foi possível localizar provas digitais para {job}.")
+            if proofs_done:
+                job.needs_proof = False
 
 
 def main():
     jobs_to_do = scan_folder_for_jobs(ENTRADA)
     if jobs_to_do:
         work(jobs_to_do, LAYOUTS, DIGITAIS, SAIDA)
+        missing_layouts = [job for job in jobs_to_do if job.needs_layout]
+        missing_proofs = [job for job in jobs_to_do if job.needs_proof]
     else:
-        print("No jobs to do. Go get a coffee...")
+        print("Não tem trabalhos pra fazer. Vai pegar um café...")
+
+    if missing_layouts:
+        print("Não encontrei os Layouts para:", missing_layouts)
+    if missing_proofs:
+        print("Não encontrei as Provas Digitais para:", missing_proofs)
+
+    # Fim do programa.
+    print("Terminei de trabalhar. Agora é sua vez!")
 
 
 if __name__ == "__main__":
