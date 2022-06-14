@@ -8,8 +8,10 @@ from PyPDF2 import PdfFileReader
 
 from osnumber import OsNumber, guess_os_number
 from jobs import Job
+from juntapdf import juntapdf
 
 TODAY = date.today().strftime("%d-%m-%Y")
+AGORA = datetime.now().strftime("%H-%M-%S")
 ENTRADA = Path(r"E:\Desktop\Entrada")
 # LAYOUTS = Path(r"E:\Desktop\Origem")
 # DIGITAIS = LAYOUTS
@@ -96,7 +98,7 @@ def scan_folder_for_jobs(folder: Path) -> list([Job]):
     return jobs
 
 
-def gather_files_for_job(job: Job, origin: Path, output: Path, description: str ="") -> int():
+def retreive_job_files(job: Job, origin: Path, output: Path, description: str ="") -> int():
     found_files = find_job_files(job, origin)
     files_done = 0
     if found_files:
@@ -114,8 +116,8 @@ def gather_files_for_job(job: Job, origin: Path, output: Path, description: str 
 
 
 def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Path) -> None:
-    for job in jobs:
-        print(f"Processando {job}...")
+    for i, job in enumerate(jobs):
+        print(f"{i} Processando {job}...")
 
         # Job needs layout.
         if job.needs_layout:
@@ -125,7 +127,7 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
             if not output_layouts.exists():
                 os.mkdir(output_layouts)
             
-            layouts_done = gather_files_for_job(
+            layouts_done = retreive_job_files(
                 job=job,
                 origin=layouts_dir,
                 output=output_layouts,
@@ -142,7 +144,7 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
             if not output_proofs.exists():
                 os.mkdir(output_proofs)
             
-            proofs_done = gather_files_for_job(
+            proofs_done = retreive_job_files(
                 job=job,
                 origin=proofs_dir,
                 output=output_proofs,
@@ -155,16 +157,25 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
 def main():
     jobs_to_do = scan_folder_for_jobs(ENTRADA)
     if jobs_to_do:
+        print(f"Jobs encontrados ({len(jobs_to_do)}):", jobs_to_do)
+
         work(jobs_to_do, LAYOUTS, DIGITAIS, SAIDA)
+
         missing_layouts = [job for job in jobs_to_do if job.needs_layout]
         missing_proofs = [job for job in jobs_to_do if job.needs_proof]
+        if missing_layouts:
+            print("Não encontrei os Layouts para:", missing_layouts)
+        if missing_proofs:
+            print("Não encontrei as Provas Digitais para:", missing_proofs)
     else:
         print("Não tem trabalhos pra fazer. Vai pegar um café...")
+        quit()
 
-    if missing_layouts:
-        print("Não encontrei os Layouts para:", missing_layouts)
-    if missing_proofs:
-        print("Não encontrei as Provas Digitais para:", missing_proofs)
+    # Junta os PDFs das OS em um único arquivo para impressão.
+    juntapdf.merge_pdfs(
+        [job.pdf for job in jobs_to_do],
+        ENTRADA.joinpath("OS_juntas_" + AGORA + ".pdf")
+        )
 
     # Fim do programa.
     print("Terminei de trabalhar. Agora é sua vez!")
