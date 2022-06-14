@@ -1,16 +1,17 @@
 from dataclasses import dataclass
 import re
 
+
 @dataclass
 class OsNumber:
     number: int
     version: int
 
+
 """
 Regular expression pattern to match 4 or more digits (OS Number) followed by
 any character or space and version number as in '123456_v13'.
 """
-# RE_OS = "(\d{4,}).[vV](\d+)|(\d{4,})_\d+_[vV](\d+)"
 RE_OS = "(\d{4,}).*[vV](\d+)"
 
 def guess_os_number(filename: str) -> OsNumber:
