@@ -14,12 +14,11 @@ from logger import logger as log
 
 TODAY = date.today().strftime("%d-%m-%Y")
 AGORA = datetime.now().strftime("%H-%M-%S")
-DESKTOP = Path(os.path.expanduser("~/Desktop"))
+# DESKTOP = Path(os.path.expanduser("~/Desktop"))
+ENTRADA = Path(r"E:\Desktop")
 ENTRADA = Path(DESKTOP, "Entrada")
 SAIDA = Path(DESKTOP, "Saida")
-# ENTRADA = Path(r"E:\Desktop\Entrada")
 # SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
-# SAIDA = Path(r"E:\Desktop\Saida") # Saída Everton
 LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
 DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
 
