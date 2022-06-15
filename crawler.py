@@ -13,11 +13,10 @@ from juntapdf import juntapdf
 TODAY = date.today().strftime("%d-%m-%Y")
 AGORA = datetime.now().strftime("%H-%M-%S")
 ENTRADA = Path(r"E:\Desktop\Entrada")
-# LAYOUTS = Path(r"E:\Desktop\Origem")
-# DIGITAIS = LAYOUTS
 LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
 DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
-SAIDA = Path(r"X:\Transporte\Leticia")
+# SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
+SAIDA = Path(r"E:\Desktop\Saida") # Saída Everton
 
 
 def os_match(job: Job, os: OsNumber) -> bool():
