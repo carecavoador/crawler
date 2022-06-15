@@ -15,10 +15,8 @@ from logger import logger as log
 TODAY = date.today().strftime("%d-%m-%Y")
 AGORA = datetime.now().strftime("%H-%M-%S")
 DESKTOP = Path(os.path.expanduser("~/Desktop"))
-# ENTRADA = Path(r"E:\Desktop")
 ENTRADA = Path(DESKTOP, "Entrada")
 SAIDA = Path(DESKTOP, "Saida")
-# SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
 LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
 DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
 
@@ -171,10 +169,9 @@ def main():
 
         if missing_proofs:
             print("Não encontrei as Provas Digitais para:", missing_proofs)
+        print("Terminei de trabalhar. Agora é sua vez!")
     else:
         print("Não tem trabalhos pra fazer. Vai pegar um café...")
-        input("Pressione qualquer tecla para sair.")
-        quit()
 
     # Junta os PDFs das OS em um único arquivo para impressão.
     juntapdf.merge_pdfs(
@@ -182,11 +179,10 @@ def main():
         ENTRADA.joinpath("OS_juntas_" + AGORA + ".pdf")
         )
 
-    # Fim do programa.
-    prinint("Terminei de trabalhar. Agora é sua vez!")
-    input("Pressione qualquer tecla para sair.")
-    log.logger.info("Executou com sucesso ", AGORA)
-
 
 if __name__ == "__main__":
     main()
+    log.logger.info("Executou com sucesso ", AGORA)
+
+    # Fim do programa.
+    input("Pressione qualquer tecla para sair.")
