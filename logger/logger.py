@@ -1,4 +1,6 @@
 import logging
+import os
+from pathlib import Path
 
 LOG_FILE = Path(os.path.expanduser("~/Desktop"), "Entrada", "crawler.log")
 logger = logging.getLogger(__name__)

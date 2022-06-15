@@ -14,8 +14,8 @@ from logger import logger as log
 
 TODAY = date.today().strftime("%d-%m-%Y")
 AGORA = datetime.now().strftime("%H-%M-%S")
-# DESKTOP = Path(os.path.expanduser("~/Desktop"))
-ENTRADA = Path(r"E:\Desktop")
+DESKTOP = Path(os.path.expanduser("~/Desktop"))
+# ENTRADA = Path(r"E:\Desktop")
 ENTRADA = Path(DESKTOP, "Entrada")
 SAIDA = Path(DESKTOP, "Saida")
 # SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
