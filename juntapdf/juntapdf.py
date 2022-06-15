@@ -1,18 +1,6 @@
-from datetime import datetime
-from PyPDF2 import PdfFileMerger, PdfFileReader
-import logging
 from pathlib import Path
-
-
-AGORA = datetime.now().strftime("%H-%M-%S")
-LOG_FILE = f"e:\Desktop\ERRO_junta-pdf-{AGORA}.log"
-logger = logging.getLogger(__name__)
-log_format = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler = logging.FileHandler(LOG_FILE, mode="a")
-handler.setLevel(logging.DEBUG)
-handler.setFormatter(log_format)
-logger.addHandler(handler)
-
+from PyPDF2 import PdfFileMerger, PdfFileReader
+from logger import logger as log
 
 def merge_pdfs(path_list: list([Path]), destination: Path) -> None:
     """
@@ -29,5 +17,5 @@ def merge_pdfs(path_list: list([Path]), destination: Path) -> None:
                     new_pdf = PdfFileReader(file)
                     pdf_merger.append(new_pdf)
             except:
-                logger.error(path, exc_info=True)
+                log.logger.error(path, exc_info=True)
         pdf_merger.write(pdf)

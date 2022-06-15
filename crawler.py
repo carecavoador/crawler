@@ -3,20 +3,25 @@ import re
 from pathlib import Path
 from shutil import move, copy
 from datetime import date, datetime
+from timeit import timeit
 
 from PyPDF2 import PdfFileReader
 
 from osnumber import OsNumber, guess_os_number
 from jobs import Job
 from juntapdf import juntapdf
+from logger import logger as log
 
 TODAY = date.today().strftime("%d-%m-%Y")
 AGORA = datetime.now().strftime("%H-%M-%S")
-ENTRADA = Path(r"E:\Desktop\Entrada")
+DESKTOP = Path(os.path.expanduser("~/Desktop"))
+ENTRADA = Path(DESKTOP, "Entrada")
+SAIDA = Path(DESKTOP, "Saida")
+# ENTRADA = Path(r"E:\Desktop\Entrada")
+# SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
+# SAIDA = Path(r"E:\Desktop\Saida") # Saída Everton
 LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
 DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
-# SAIDA = Path(r"X:\Transporte\Leticia") # Saída Letícia
-SAIDA = Path(r"E:\Desktop\Saida") # Saída Everton
 
 
 def os_match(job: Job, os: OsNumber) -> bool():
@@ -164,10 +169,12 @@ def main():
         missing_proofs = [job for job in jobs_to_do if job.needs_proof]
         if missing_layouts:
             print("Não encontrei os Layouts para:", missing_layouts)
+
         if missing_proofs:
             print("Não encontrei as Provas Digitais para:", missing_proofs)
     else:
         print("Não tem trabalhos pra fazer. Vai pegar um café...")
+        input("Pressione qualquer tecla para sair.")
         quit()
 
     # Junta os PDFs das OS em um único arquivo para impressão.
@@ -177,7 +184,9 @@ def main():
         )
 
     # Fim do programa.
-    print("Terminei de trabalhar. Agora é sua vez!")
+    prinint("Terminei de trabalhar. Agora é sua vez!")
+    input("Pressione qualquer tecla para sair.")
+    log.logger.info("Executou com sucesso ", AGORA)
 
 
 if __name__ == "__main__":
