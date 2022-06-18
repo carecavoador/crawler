@@ -1,5 +1,7 @@
 import os
 import re
+import json
+from typing import List, Tuple
 from pathlib import Path
 from shutil import move, copy
 from datetime import date, datetime
@@ -10,18 +12,43 @@ from PyPDF2 import PdfFileReader
 from osnumber import OsNumber, guess_os_number
 from jobs import Job
 from juntapdf import juntapdf
-from logger import logger as log
 
+
+# Configuration
 TODAY = date.today().strftime("%d-%m-%Y")
-AGORA = datetime.now().strftime("%H-%M-%S")
-DESKTOP = Path(os.path.expanduser("~/Desktop"))
-ENTRADA = Path(DESKTOP, "Entrada")
-SAIDA = Path(DESKTOP, "Saida")
-LAYOUTS = Path(r"F:\blumenau\Print Layout").joinpath(TODAY)
-DIGITAIS = Path(r"F:\blumenau\Print Digital").joinpath(TODAY)
+NOW = datetime.now().strftime("%H-%M-%S")
+CONFIG = json.load(open("C:\Projetos\Python\crawler\config.json", "r", encoding="utf-8"))
+JOBS_FOLDER = Path(CONFIG["jobs_folder"])
+OUTPUT_FOLDER = Path(CONFIG["output_folder"])
+LAYOUTS_FOLDER = Path(CONFIG["layouts_folder"])
+PROOFS_FOLDER = Path(CONFIG["proofs_folder"])
 
 
-def os_match(job: Job, os: OsNumber) -> bool():
+def scan_folder_for_jobs(location: Path) -> List[Job]:
+    """
+    Scans a directory looking for jobs to do and returns a list with Job
+    objects with the jobs found.
+    """
+    found_jobs = []
+    candidates = [Path(location, _) for _ in os.listdir(location)]
+
+    for candidate in candidates:
+        os_num = guess_os_number(candidate.name)
+        if os_num:
+            profile, layout, proof, pdf = get_data_for_job(candidate)
+            found_jobs.append(
+                Job(
+                    os=os_num,
+                    profile=profile,
+                    needs_layout=layout,
+                    needs_proof=proof,
+                    pdf=pdf
+                )
+            )
+    return found_jobs
+
+
+def os_match(job: Job, os: OsNumber) -> bool:
     """Compares if a OsNumber is equal to a Job's OsNumber."""
     if job.os.number == os.number and job.os.version == os.version:
         return True
@@ -29,15 +56,15 @@ def os_match(job: Job, os: OsNumber) -> bool():
         return False
 
 
-def find_job_files(job: Job, origin: Path) -> list([Path]):
+def find_job_files(job: Job, location: Path) -> List[Path]:
     """
     Tries to find Job files in a specific directory and returns a list
     of Path objects with the full path to the found files.
     """
     job_files = []
 
-    files = os.listdir(origin)
-    files = [Path(origin, file) for file in files]
+    files = os.listdir(location)
+    files = [Path(location, file) for file in files]
 
     for file in files:
         # Checks for OsNumber in filename.
@@ -50,11 +77,11 @@ def find_job_files(job: Job, origin: Path) -> list([Path]):
     return job_files
 
 
-def get_data_for_job(pdf: Path) -> tuple():
+def get_data_for_job(pdf: Path) -> Tuple:
     """
     Reads a PDF file and extract it's text to look for the job
     information. Returns a tuple containing: (profile: str, layout: bool,
-    proof: bool).
+    proof: bool, pdf: Path).
     """
     profile = ""
     layout = False
@@ -77,48 +104,50 @@ def get_data_for_job(pdf: Path) -> tuple():
     return (profile, layout, proof, pdf)
 
 
-def scan_folder_for_jobs(folder: Path) -> list([Job]):
-    """
-    Scans a directory looking for jobs to do and returns a list with Job
-    objects for the jobs found.
-    """
-    jobs = []
-    candidates = [Path(folder, c) for c in os.listdir(folder)]
-
-    for candidate in candidates:
-        os_num = guess_os_number(candidate.name)
-        if os_num:
-            new_job = Job(os_num)
-            job_data = get_data_for_job(candidate)
-            new_job.profile = job_data[0]
-            new_job.needs_layout = job_data[1]
-            new_job.needs_proof = job_data[2]
-            new_job.pdf = job_data[3]
-            jobs.append(new_job)
+def ask_to_overwrite(file: Path) -> bool:
+    choice = input(
+        f"\t-> ATENÇÃO! O arquivo {file.name} já foi baixado. Deseja substituí-lo? (esta ação não poderá ser desfeita!) Sim/Não? "
+    ).lower()
     
-    return jobs
+    if choice == "s" or choice == "sim":
+        return True
+    else:
+        return False
 
 
-def retreive_job_files(job: Job, origin: Path, output: Path, description: str ="") -> int():
-    found_files = find_job_files(job, origin)
+def retreive_job_files(
+        job: Job, location: Path, output: Path, description: str =""
+    ) -> int:
+
+    found_files = find_job_files(job, location)
     files_done = 0
-    if found_files:
-        for file in found_files:
-            copy(file, output.joinpath(f"{job}{description}{file.suffix}"))
-            files_done += 1
-            done_dir = origin.joinpath("Baixados")
-            if not done_dir.exists():
-                os.mkdir(done_dir)
-            try:
-                move(file, done_dir)
-            except Exception as e:
-                print(e)
+
+    for file in found_files:
+        copy(file, output.joinpath(f"{job}{description}{file.suffix}"))
+        files_done += 1
+        done_dir = location.joinpath("Baixados")
+        if not done_dir.exists():
+            os.mkdir(done_dir)
+        
+        if not file.exists():
+            move(file, done_dir)
+        else:
+            overwrite = ask_to_overwrite(file)
+            if overwrite:
+                copy(file, done_dir)
+                os.remove(file)
+                print(f"\t--> O arquivo {file.name} FOI substituído.")
+            else:
+                print(f"\t--> O arquivo {file.name} NÃO foi substituído.")
     return files_done
 
 
-def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Path) -> None:
-    for i, job in enumerate(jobs):
-        print(f"{i} Processando {job}...")
+def work(
+        jobs: List[Job], layouts_dir: Path, proofs_dir: Path, destination: Path
+    ) -> None:
+    
+    for job in jobs:
+        print(f"\n\t-> Processando {job}...")
 
         # Job needs layout.
         if job.needs_layout:
@@ -130,7 +159,7 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
             
             layouts_done = retreive_job_files(
                 job=job,
-                origin=layouts_dir,
+                location=layouts_dir,
                 output=output_layouts,
                 description="_Print_Layout"
             )
@@ -147,7 +176,7 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
             
             proofs_done = retreive_job_files(
                 job=job,
-                origin=proofs_dir,
+                location=proofs_dir,
                 output=output_proofs,
                 description=job.profile
             )
@@ -156,33 +185,34 @@ def work(jobs: list([Job]), layouts_dir: Path, proofs_dir: Path, destination: Pa
 
 
 def main():
-    jobs_to_do = scan_folder_for_jobs(ENTRADA)
+    jobs_to_do = scan_folder_for_jobs(JOBS_FOLDER)
+    
     if jobs_to_do:
-        print(f"Jobs encontrados ({len(jobs_to_do)}):", jobs_to_do)
+        print(f"{len(jobs_to_do)} Jobs encontrados:", jobs_to_do)
 
-        work(jobs_to_do, LAYOUTS, DIGITAIS, SAIDA)
-
+        work(jobs_to_do, LAYOUTS_FOLDER, PROOFS_FOLDER, OUTPUT_FOLDER)
         missing_layouts = [job for job in jobs_to_do if job.needs_layout]
         missing_proofs = [job for job in jobs_to_do if job.needs_proof]
+
         if missing_layouts:
             print("Não encontrei os Layouts para:", missing_layouts)
 
         if missing_proofs:
             print("Não encontrei as Provas Digitais para:", missing_proofs)
         print("Terminei de trabalhar. Agora é sua vez!")
+    
     else:
         print("Não tem trabalhos pra fazer. Vai pegar um café...")
 
     # Junta os PDFs das OS em um único arquivo para impressão.
     juntapdf.merge_pdfs(
         [job.pdf for job in jobs_to_do],
-        ENTRADA.joinpath("OS_juntas_" + AGORA + ".pdf")
-        )
+        JOBS_FOLDER.joinpath("OS_juntas_" + NOW + ".pdf")
+    )
 
 
 if __name__ == "__main__":
     main()
-    log.logger.info("Executou com sucesso ", AGORA)
 
     # Fim do programa.
     input("Pressione qualquer tecla para sair.")
