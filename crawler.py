@@ -14,15 +14,17 @@ from jobs import Job
 from juntapdf import juntapdf
 
 
-# Configuration
+# -> Configuration
 TODAY = date.today().strftime("%d-%m-%Y")
 NOW = datetime.now().strftime("%H-%M-%S")
+
+# Loads config.json file and set configuration constants.
 CONFIG = json.load(open("C:\Projetos\Python\crawler\config.json", "r", encoding="utf-8"))
 JOBS_FOLDER = Path(CONFIG["jobs_folder"])
 OUTPUT_FOLDER = Path(CONFIG["output_folder"])
 LAYOUTS_FOLDER = Path(CONFIG["layouts_folder"])
 PROOFS_FOLDER = Path(CONFIG["proofs_folder"])
-
+# -----------------------------------------------------------------------------
 
 def scan_folder_for_jobs(location: Path) -> List[Job]:
     """
