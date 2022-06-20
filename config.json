@@ -1,6 +1,6 @@
 {
-    "jobs_folder"       : "C:\\Projetos\\Python\\crawler\\testing\\jobs",
-    "layouts_folder"    : "C:\\Projetos\\Python\\crawler\\testing\\layouts",
-    "proofs_folder"     : "C:\\Projetos\\Python\\crawler\\testing\\proofs",
-    "output_folder"     : "C:\\Projetos\\Python\\crawler\\testing\\output"
+    "jobs_folder"       : "E:\\Desktop\\JOBS",
+    "layouts_folder"    : "F:\\blumenau\\Print Layout",
+    "proofs_folder"     : "F:\\blumenau\\Print Digital",
+    "output_folder"     : "E:\\Desktop\\Saida"
 }

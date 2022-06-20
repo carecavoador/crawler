@@ -1,17 +1,15 @@
 import os
 import re
 import json
-from typing import List, Tuple
 from pathlib import Path
 from shutil import move, copy
 from datetime import date, datetime
-from timeit import timeit
 
 from PyPDF2 import PdfFileReader
 
 from osnumber import OsNumber, guess_os_number
 from jobs import Job
-from juntapdf import juntapdf
+from juntapdf.juntapdf import merge_pdfs
 
 
 # -> Configuration
@@ -19,14 +17,16 @@ TODAY = date.today().strftime("%d-%m-%Y")
 NOW = datetime.now().strftime("%H-%M-%S")
 
 # Loads config.json file and set configuration constants.
-CONFIG = json.load(open("C:\Projetos\Python\crawler\config.json", "r", encoding="utf-8"))
+ROOT_FOLDER = Path(__file__).parent
+CONFIG_FILE = "config.json"
+CONFIG = json.load(open(Path(ROOT_FOLDER, CONFIG_FILE), "r", encoding="utf-8"))
 JOBS_FOLDER = Path(CONFIG["jobs_folder"])
 OUTPUT_FOLDER = Path(CONFIG["output_folder"])
-LAYOUTS_FOLDER = Path(CONFIG["layouts_folder"])
-PROOFS_FOLDER = Path(CONFIG["proofs_folder"])
+LAYOUTS_FOLDER = Path(CONFIG["layouts_folder"], TODAY)
+PROOFS_FOLDER = Path(CONFIG["proofs_folder"], TODAY)
 # -----------------------------------------------------------------------------
 
-def scan_folder_for_jobs(location: Path) -> List[Job]:
+def scan_folder_for_jobs(location: Path) -> list[Job]:
     """
     Scans a directory looking for jobs to do and returns a list with Job
     objects with the jobs found.
@@ -58,7 +58,7 @@ def os_match(job: Job, os: OsNumber) -> bool:
         return False
 
 
-def find_job_files(job: Job, location: Path) -> List[Path]:
+def find_job_files(job: Job, location: Path) -> list[Path]:
     """
     Tries to find Job files in a specific directory and returns a list
     of Path objects with the full path to the found files.
@@ -79,7 +79,7 @@ def find_job_files(job: Job, location: Path) -> List[Path]:
     return job_files
 
 
-def get_data_for_job(pdf: Path) -> Tuple:
+def get_data_for_job(pdf: Path) -> tuple:
     """
     Reads a PDF file and extract it's text to look for the job
     information. Returns a tuple containing: (profile: str, layout: bool,
@@ -108,7 +108,7 @@ def get_data_for_job(pdf: Path) -> Tuple:
 
 def ask_to_overwrite(file: Path) -> bool:
     choice = input(
-        f"\t-> ATENÇÃO! O arquivo {file.name} já foi baixado. Deseja substituí-lo? (esta ação não poderá ser desfeita!) Sim/Não? "
+        f"-> ATENÇÃO! O arquivo {file.name} já foi baixado. Deseja substituí-lo? (esta ação não poderá ser desfeita!) Sim/Não? "
     ).lower()
     
     if choice == "s" or choice == "sim":
@@ -117,9 +117,7 @@ def ask_to_overwrite(file: Path) -> bool:
         return False
 
 
-def retreive_job_files(
-        job: Job, location: Path, output: Path, description: str =""
-    ) -> int:
+def retreive_job_files(job: Job, location: Path, output: Path, description: str ="") -> int:
 
     found_files = find_job_files(job, location)
     files_done = 0
@@ -131,25 +129,22 @@ def retreive_job_files(
         if not done_dir.exists():
             os.mkdir(done_dir)
         
-        if not file.exists():
-            move(file, done_dir)
-        else:
-            overwrite = ask_to_overwrite(file)
-            if overwrite:
+        if file.exists():
+            if ask_to_overwrite(file):
                 copy(file, done_dir)
                 os.remove(file)
-                print(f"\t--> O arquivo {file.name} FOI substituído.")
+                print(f"--> O arquivo {file.name} FOI substituído.")
             else:
-                print(f"\t--> O arquivo {file.name} NÃO foi substituído.")
+                print(f"--> O arquivo {file.name} NÃO foi substituído.")
+        else:
+            move(file, done_dir)
     return files_done
 
 
-def work(
-        jobs: List[Job], layouts_dir: Path, proofs_dir: Path, destination: Path
-    ) -> None:
+def work(jobs: list[Job], layouts_dir: Path, proofs_dir: Path, destination: Path) -> None:
     
     for job in jobs:
-        print(f"\n\t-> Processando {job}...")
+        print(f"> Processando {job}...")
 
         # Job needs layout.
         if job.needs_layout:
@@ -190,27 +185,26 @@ def main():
     jobs_to_do = scan_folder_for_jobs(JOBS_FOLDER)
     
     if jobs_to_do:
-        print(f"{len(jobs_to_do)} Jobs encontrados:", jobs_to_do)
+        print(f"{len(jobs_to_do)} > Jobs encontrados:", jobs_to_do)
 
         work(jobs_to_do, LAYOUTS_FOLDER, PROOFS_FOLDER, OUTPUT_FOLDER)
         missing_layouts = [job for job in jobs_to_do if job.needs_layout]
         missing_proofs = [job for job in jobs_to_do if job.needs_proof]
 
         if missing_layouts:
-            print("Não encontrei os Layouts para:", missing_layouts)
+            print("> Não encontrei os Layouts para:", missing_layouts)
 
         if missing_proofs:
-            print("Não encontrei as Provas Digitais para:", missing_proofs)
+            print("> Não encontrei as Provas Digitais para:", missing_proofs)
+    
+        # Junta os PDFs das OS em um único arquivo para impressão.
+        merge_pdfs([job.pdf for job in jobs_to_do],JOBS_FOLDER.joinpath("OS_juntas_" + NOW + ".pdf"))
+
         print("Terminei de trabalhar. Agora é sua vez!")
     
     else:
         print("Não tem trabalhos pra fazer. Vai pegar um café...")
 
-    # Junta os PDFs das OS em um único arquivo para impressão.
-    juntapdf.merge_pdfs(
-        [job.pdf for job in jobs_to_do],
-        JOBS_FOLDER.joinpath("OS_juntas_" + NOW + ".pdf")
-    )
 
 
 if __name__ == "__main__":
