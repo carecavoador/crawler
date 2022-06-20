@@ -1,6 +1,6 @@
 {
-    "jobs_folder"       : "E:\\Desktop\\JOBS",
-    "layouts_folder"    : "F:\\blumenau\\Print Layout",
-    "proofs_folder"     : "F:\\blumenau\\Print Digital",
-    "output_folder"     : "E:\\Desktop\\Saida"
+    "jobs_folder": "E:\\Desktop\\JOBS",
+    "output_folder": "E:\\Desktop\\JOBS",
+    "layouts_folder": "F:\\blumenau\\Print Layout",
+    "proofs_folder": "F:\\blumenau\\Print Digital"
 }
