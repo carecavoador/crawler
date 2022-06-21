@@ -150,6 +150,7 @@ def work(jobs: list[Job], layouts_dir: Path, proofs_dir: Path, output_dir: Path)
 
 
 def main():
+    ROOT_FOLDER = Path(__file__).parent
     # -------------------------------------------------------------------------
     # Reads options and arguments passed by the CLI if any.
     options = [opt for opt in argv[1:] if opt.startswith("--")]
@@ -161,7 +162,7 @@ def main():
         CONFIG = load_config(argv[opt_index+1])
     else:
         # If no optional config file is passed via CLI, uses the default.
-        CONFIG = load_config("config.json")
+        CONFIG = load_config(ROOT_FOLDER.joinpath("config.json"))
 
     if "--greet" in options:
         # This is just a joke to test positional options and arguments. Delete this!
@@ -169,7 +170,6 @@ def main():
         greet = argv[opt_index+1]
         print(f"Seja bem vindo, mestre {greet}!")
 
-    ROOT_FOLDER = Path(__file__).parent
     TODAY = date.today().strftime("%d-%m-%Y")
     NOW = datetime.now().strftime("%H-%M-%S")
     JOBS_FOLDER = Path(CONFIG["jobs_folder"])
@@ -208,4 +208,4 @@ if __name__ == "__main__":
     main()
 
     # Fim do programa.
-    input("Pressione qualquer tecla para sair.")
+    print("Programa terminado.")
